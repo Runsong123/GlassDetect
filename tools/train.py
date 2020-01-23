@@ -95,7 +95,7 @@ def main():
         logger.info('Set random seed to {}, deterministic: {}'.format(
             args.seed, args.deterministic))
         set_random_seed(args.seed, deterministic=args.deterministic)
-
+    print(cfg.data.train)
     model = build_detector(
         cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
 
@@ -118,7 +118,18 @@ def main():
         distributed=distributed,
         validate=args.validate,
         timestamp=timestamp)
-
+def pre_model():
+    import torch
+    num_classes = 11
+    model_coco = torch.load("/home/culturerelics/mmdetection/checkpoints/cascade_rcnn_r50_fpn_1x_20190501-3b6211ab.pth") # weight 
+    model_coco["state_dict"]["bbox_head.0.fc_cls.weight"] = model_coco["state_dict"]["bbox_head.0.fc_cls.weight"][ :num_classes, :]
+    model_coco["state_dict"]["bbox_head.1.fc_cls.weight"] =  model_coco["state_dict"]["bbox_head.1.fc_cls.weight"][ :num_classes, :]
+    model_coco["state_dict"]["bbox_head.2.fc_cls.weight"] = model_coco["state_dict"]["bbox_head.2.fc_cls.weight"][ :num_classes, :]
+    model_coco["state_dict"]["bbox_head.0.fc_cls.bias"] = model_coco["state_dict"]["bbox_head.0.fc_cls.bias"][ :num_classes]
+    model_coco["state_dict"]["bbox_head.1.fc_cls.bias"] = model_coco["state_dict"]["bbox_head.1.fc_cls.bias"][ :num_classes]
+    model_coco["state_dict"]["bbox_head.2.fc_cls.bias"] = model_coco["state_dict"]["bbox_head.2.fc_cls.bias"][ :num_classes]
+    # save new model 
+    torch.save(model_coco, "/home/culturerelics/mmdetection/checkpoints/cascade_rcnn_r50_coco_pretrained_weights_classes_%d.pth" % num_classes)
 
 if __name__ == '__main__':
     main()
