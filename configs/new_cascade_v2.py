@@ -10,7 +10,7 @@ model = dict(
         depth=50,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
+        frozen_stages=-1,
         style='pytorch',
         #dcn=dict( #在最后三个block加入可变形卷积
          #   modulated=False, deformable_groups=1, fallback_on_stride=False),
@@ -26,7 +26,7 @@ model = dict(
         in_channels=256,
         feat_channels=256,
         anchor_scales=[8],
-        anchor_ratios=[0.2, 0.5, 1.0, 2.0, 5.0], # 添加了0.2，5，过两天发图
+        anchor_ratios=[0.1,0.2, 0.5, 1.0, 2.0, 5.0,1.0], # 添加了0.2，5，过两天发图
         anchor_strides=[4, 8, 16, 32, 64],
         target_means=[.0, .0, .0, .0],
         target_stds=[1.0, 1.0, 1.0, 1.0],
@@ -37,6 +37,7 @@ model = dict(
         type='SingleRoIExtractor',
         roi_layer=dict(type='RoIAlign', out_size=7, sample_num=2),
         out_channels=256,
+        add_context=True,
         featmap_strides=[4, 8, 16, 32]),
     bbox_head=[
         dict(
@@ -84,9 +85,9 @@ train_cfg = dict(
     rpn=dict(
         assigner=dict(
             type='MaxIoUAssigner',
-            pos_iou_thr=0.7,
-            neg_iou_thr=0.3,
-            min_pos_iou=0.3,
+            pos_iou_thr=0.6,
+            neg_iou_thr=0.2,
+            min_pos_iou=0.2,
             ignore_iof_thr=-1),
         sampler=dict(
             type='RandomSampler',
@@ -161,7 +162,7 @@ test_cfg = dict(
         nms_thr=0.7,
         min_bbox_size=0),
     rcnn=dict(
-        score_thr=0.05, nms=dict(type='soft_nms', iou_thr=0.5), max_per_img=20)) # 这里可以换为soft_nms
+        score_thr=0.05, nms=dict(type='soft_nms', iou_thr=0.1), max_per_img=20)) # 这里可以换为soft_nms
 # dataset settings
 dataset_type = 'CocoDataset'
 data_root = '/home/culturerelics/mmdetection/data/chongqing1_round1_train1_20191223/'
@@ -175,12 +176,10 @@ train_pipeline = [
         mean=img_norm_cfg['mean'],
         to_rgb=img_norm_cfg['to_rgb'],
         ratio_range=(1, 4)),
-    dict(
-        type='MinIoURandomCrop',
-        min_ious=(0.1, 0.3, 0.5, 0.7, 0.9),
-        min_crop_size=0.3),
     dict(type='Resize', img_scale=[(1333, 800), (1333, 1200)], multiscale_mode='range',keep_ratio=True), #这里可以更换多尺度[(),()]
     dict(type='RandomFlip', flip_ratio=0.5),
+    dict(type='RandomFlip', flip_ratio=0.5,direction='vertical'),
+    dict(type='BBoxJitter', min=0.9, max=1.1),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
@@ -194,7 +193,8 @@ test_pipeline = [
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
-            dict(type='RandomFlip'),
+            dict(type='RandomFlip',flip_ratio=0.5),
+            dict(type='RandomFlip', flip_ratio=0.5,direction='vertical'),
             dict(type='Normalize', **img_norm_cfg),
             dict(type='Pad', size_divisor=32),
             dict(type='ImageToTensor', keys=['img']),
@@ -220,7 +220,7 @@ data = dict(
         img_prefix=data_root + 'images/',
         pipeline=test_pipeline))
 # optimizer
-optimizer = dict(type='SGD', lr=0.0025, momentum=0.9, weight_decay=0.0001) # lr = 0.00125*batch_size，不能过大，否则梯度爆炸。
+optimizer = dict(type='SGD', lr=0.00125, momentum=0.9, weight_decay=0.0001) # lr = 0.00125*batch_size，不能过大，否则梯度爆炸。
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
@@ -242,7 +242,7 @@ log_config = dict(
 total_epochs = 20
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = '/home/culturerelics/mmdetection/work_dirs/cascade_rcnn_clean_new_v4' # 日志目录
+work_dir = '/home/culturerelics/mmdetection/work_dirs/cascade_rcnn_clean_new_v7' # 日志目录
 #load_from = '../work_dirs/cascade_rcnn_r50_fpn_1x/latest.pth' # 模型加载目录文件
 load_from = '/home/culturerelics/mmdetection/checkpoints/cascade_rcnn_r50_fpn_1x_20190501-3b6211ab.pth'
 resume_from = None

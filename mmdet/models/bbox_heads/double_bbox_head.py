@@ -71,7 +71,7 @@ class BasicResBlock(nn.Module):
 
 @HEADS.register_module
 class DoubleConvFCBBoxHead(BBoxHead):
-    r"""Bbox head used in Double-Head R-CNN
+    """Bbox head used in Double-Head R-CNN
 
                                       /-> cls
                   /-> shared convs ->

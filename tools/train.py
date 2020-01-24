@@ -111,13 +111,14 @@ def main():
             CLASSES=datasets[0].CLASSES)
     # add an attribute for visualization convenience
     model.CLASSES = datasets[0].CLASSES
-    train_detector(
-        model,
-        datasets,
-        cfg,
-        distributed=distributed,
-        validate=args.validate,
-        timestamp=timestamp)
+    with torch.autograd.set_detect_anomaly(True):
+        train_detector(
+            model,
+            datasets,
+            cfg,
+            distributed=distributed,
+            validate=args.validate,
+            timestamp=timestamp)
 def pre_model():
     import torch
     num_classes = 11

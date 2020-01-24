@@ -9,7 +9,7 @@ from ..builder import build_loss
 from ..losses import accuracy
 from ..registry import HEADS
 
-
+from icecream import ic
 @HEADS.register_module
 class BBoxHead(nn.Module):
     """Simplest RoI head, with only two fc layers for classification and
@@ -107,30 +107,26 @@ class BBoxHead(nn.Module):
         losses = dict()
         if cls_score is not None:
             avg_factor = max(torch.sum(label_weights > 0).float().item(), 1.)
-            if cls_score.numel() > 0:
-                losses['loss_cls'] = self.loss_cls(
-                    cls_score,
-                    labels,
-                    label_weights,
-                    avg_factor=avg_factor,
-                    reduction_override=reduction_override)
-                losses['acc'] = accuracy(cls_score, labels)
+            losses['loss_cls'] = self.loss_cls(
+                cls_score,
+                labels,
+                label_weights,
+                avg_factor=avg_factor,
+                reduction_override=reduction_override)
+            losses['acc'] = accuracy(cls_score, labels)
         if bbox_pred is not None:
             pos_inds = labels > 0
-            if pos_inds.any():
-                if self.reg_class_agnostic:
-                    pos_bbox_pred = bbox_pred.view(bbox_pred.size(0),
-                                                   4)[pos_inds]
-                else:
-                    pos_bbox_pred = bbox_pred.view(bbox_pred.size(0), -1,
-                                                   4)[pos_inds,
-                                                      labels[pos_inds]]
-                losses['loss_bbox'] = self.loss_bbox(
-                    pos_bbox_pred,
-                    bbox_targets[pos_inds],
-                    bbox_weights[pos_inds],
-                    avg_factor=bbox_targets.size(0),
-                    reduction_override=reduction_override)
+            if self.reg_class_agnostic:
+                pos_bbox_pred = bbox_pred.view(bbox_pred.size(0), 4)[pos_inds]
+            else:
+                pos_bbox_pred = bbox_pred.view(bbox_pred.size(0), -1,
+                                               4)[pos_inds, labels[pos_inds]]
+            losses['loss_bbox'] = self.loss_bbox(
+                pos_bbox_pred,
+                bbox_targets[pos_inds],
+                bbox_weights[pos_inds],
+                avg_factor=bbox_targets.size(0),
+                reduction_override=reduction_override)
         return losses
 
     @force_fp32(apply_to=('cls_score', 'bbox_pred'))
@@ -159,9 +155,7 @@ class BBoxHead(nn.Module):
             if isinstance(scale_factor, float):
                 bboxes /= scale_factor
             else:
-                scale_factor = torch.from_numpy(scale_factor).to(bboxes.device)
-                bboxes = (bboxes.view(bboxes.size(0), -1, 4) /
-                          scale_factor).view(bboxes.size()[0], -1)
+                bboxes /= torch.from_numpy(scale_factor).to(bboxes.device)
 
         if cfg is None:
             return bboxes, scores
@@ -208,7 +202,6 @@ class BBoxHead(nn.Module):
             pos_keep = 1 - pos_is_gts_
             keep_inds = pos_is_gts_.new_ones(num_rois)
             keep_inds[:len(pos_is_gts_)] = pos_keep
-
             bboxes_list.append(bboxes[keep_inds])
 
         return bboxes_list

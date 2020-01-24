@@ -64,7 +64,6 @@ def weighted_loss(loss_func):
 
     :Example:
 
-    >>> import torch
     >>> @weighted_loss
     >>> def l1_loss(pred, target):
     >>>     return (pred - target).abs()

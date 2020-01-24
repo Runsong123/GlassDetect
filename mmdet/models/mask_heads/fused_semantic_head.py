@@ -9,7 +9,7 @@ from ..utils import ConvModule
 
 @HEADS.register_module
 class FusedSemanticHead(nn.Module):
-    r"""Multi-level fused semantic segmentation head.
+    """Multi-level fused semantic segmentation head.
 
     in_1 -> 1x1 conv ---
                         |

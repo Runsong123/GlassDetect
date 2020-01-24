@@ -67,7 +67,6 @@ class GPCell(MergingCell):
 @NECKS.register_module
 class NASFPN(nn.Module):
     """NAS-FPN.
-
     NAS-FPN: Learning Scalable Feature Pyramid Architecture for Object
     Detection. (https://arxiv.org/abs/1904.07392)
     """
@@ -105,26 +104,19 @@ class NASFPN(nn.Module):
         # add lateral connections
         self.lateral_convs = nn.ModuleList()
         for i in range(self.start_level, self.backbone_end_level):
-            l_conv = ConvModule(
-                in_channels[i],
-                out_channels,
-                1,
-                norm_cfg=norm_cfg,
-                activation=None)
+            l_conv = nn.Conv2d(in_channels[i], out_channels, 1)
             self.lateral_convs.append(l_conv)
 
         # add extra downsample layers (stride-2 pooling or conv)
         extra_levels = num_outs - self.backbone_end_level + self.start_level
         self.extra_downsamples = nn.ModuleList()
         for i in range(extra_levels):
-            extra_conv = ConvModule(
-                out_channels,
-                out_channels,
-                1,
-                norm_cfg=norm_cfg,
-                activation=None)
-            self.extra_downsamples.append(
-                nn.Sequential(extra_conv, nn.MaxPool2d(2, 2)))
+            if self.add_extra_convs:
+                extra_conv = nn.Conv2d(
+                    out_channels, out_channels, 3, stride=2, padding=1)
+                self.extra_downsamples.append(extra_conv)
+            else:
+                self.extra_downsamples.append(nn.MaxPool2d(1, stride=2))
 
         # add NAS FPN connections
         self.fpn_stages = nn.ModuleList()
