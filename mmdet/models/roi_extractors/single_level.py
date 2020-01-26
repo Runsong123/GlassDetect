@@ -93,7 +93,6 @@ class SingleRoIExtractor(nn.Module):
     def forward(self, feats, rois, roi_scale_factor=None):
         if len(feats) == 1:
             return self.roi_layers[0](feats[0], rois)
-
         if self.add_context:
             context = []
             for feat in feats:
@@ -107,8 +106,6 @@ class SingleRoIExtractor(nn.Module):
             rois.size(0), self.out_channels, *out_size)
         if roi_scale_factor is not None:
             rois = self.roi_rescale(rois, roi_scale_factor)
-
-
         for i in range(num_levels):
             inds = target_lvls == i
             if inds.any():
@@ -116,7 +113,6 @@ class SingleRoIExtractor(nn.Module):
                 roi_feats_t = self.roi_layers[i](feats[i], rois_)
                 if self.add_context:
                     for j in range(batch_size):
-                        roi_feats_t[rois_[:, 0] == j] +=context[i][j]
+                        roi_feats_t[rois_[:, 0] == j] += context[i][j]
                 roi_feats[inds] = roi_feats_t
-
         return roi_feats
