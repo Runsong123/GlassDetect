@@ -12,9 +12,9 @@ model = dict(
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
         style='pytorch',
-        # dcn=dict( #在最后三个block加入可变形卷积
-        #    modulated=False, deformable_groups=1, fallback_on_stride=False),
-        #    stage_with_dcn=(False, True, True, True)
+        dcn=dict( #在最后三个block加入可变形卷积
+           modulated=False, deformable_groups=1, fallback_on_stride=False),
+           stage_with_dcn=(False, True, True, True)
         ),
     neck=dict(
         type='FPN',
@@ -162,7 +162,7 @@ test_cfg = dict(
         nms_thr=0.7,
         min_bbox_size=0),
     rcnn=dict(
-        score_thr=0.05, nms=dict(type='nms', iou_thr=0.1), max_per_img=20)) # 这里可以换为soft_nms
+        score_thr=0.05, nms=dict(type='soft_nms', iou_thr=0.5), max_per_img=20)) # 这里可以换为soft_nms
 # dataset settings
 dataset_type = 'CocoDataset'
 data_root = '/home/culturerelics/mmdetection/data/chongqing1_round1_train1_20191223/'
@@ -234,7 +234,7 @@ log_config = dict(
 total_epochs = 20
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = '/home/culturerelics/mmdetection/work_dirs/cascadev3_log2' # 日志目录
+work_dir = '/home/culturerelics/mmdetection/work_dirs/cascadev3_log3' # 日志目录
 #load_from = '../work_dirs/cascade_rcnn_r50_fpn_1x/latest.pth' # 模型加载目录文件
 load_from = '/home/culturerelics/mmdetection/checkpoints/cascade_rcnn_r50_fpn_1x_20190501-3b6211ab.pth'
 resume_from = None

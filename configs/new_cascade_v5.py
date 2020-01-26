@@ -12,9 +12,9 @@ model = dict(
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
         style='pytorch',
-        # dcn=dict( #在最后三个block加入可变形卷积
-        #    modulated=False, deformable_groups=1, fallback_on_stride=False),
-        #    stage_with_dcn=(False, True, True, True)
+        #dcn=dict( #在最后三个block加入可变形卷积
+         #   modulated=False, deformable_groups=1, fallback_on_stride=False),
+          #  stage_with_dcn=(False, True, True, True)
         ),
     neck=dict(
         type='FPN',
@@ -162,7 +162,7 @@ test_cfg = dict(
         nms_thr=0.7,
         min_bbox_size=0),
     rcnn=dict(
-        score_thr=0.05, nms=dict(type='nms', iou_thr=0.1), max_per_img=20)) # 这里可以换为soft_nms
+        score_thr=0.05, nms=dict(type='soft_nms', iou_thr=0.5), max_per_img=20)) # 这里可以换为soft_nms
 # dataset settings
 dataset_type = 'CocoDataset'
 data_root = '/home/culturerelics/mmdetection/data/chongqing1_round1_train1_20191223/'
@@ -173,6 +173,7 @@ train_pipeline = [
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='Resize', img_scale=[(1333, 800), (1333, 1200)], multiscale_mode='range',keep_ratio=True), #这里可以更换多尺度[(),()]
     dict(type='RandomFlip', flip_ratio=0.5),
+    dict(type='RandomFlip', flip_ratio=0.5,direction='vertical'),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
